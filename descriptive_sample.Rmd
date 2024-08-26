@@ -1,0 +1,238 @@
+---
+title: "descriptive_sample"
+author: "Tomoki Nishiyama"
+date: "2024-01-11"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(tidyverse, arrow)
+```
+
+# data
+```{r}
+horse_df <- read_parquet("../data/dev/horse_race_info_cleaned_all2.parquet")
+```
+
+
+
+
+# Race Info
+```{r}
+ggplot(data = horse_df, aes(x = race_date)) +
+  geom_histogram()
+```
+
+# Place
+
+```{r}
+ggplot(data = horse_df, aes(x = race_date)) +
+  geom_histogram() +
+  facet_wrap(facets = ~place_name_en, ncol = 3)
+```
+
+```{r}
+ggplot(data = horse_df, aes(x = course_len)) +
+  geom_histogram() +
+  facet_wrap(facets = ~place_name_en, ncol = 3)
+```
+
+
+```{r}
+ggplot(data = horse_df, aes(x = horse_count)) +
+  geom_histogram() +
+  facet_wrap(facets = ~place_name_en, ncol = 3, scales = "free_y")
+```
+
+```{r}
+horse_df %>% 
+  filter(!is.na(course_dir_en)) %>% 
+  ggplot(data = ., aes(x = course_dir_en)) +
+  geom_bar() +
+  facet_wrap(facets = ~place_name_en, ncol = 3)
+```
+
+# Course Direction and Result
+```{r}
+horse_df %>% 
+  filter(arrival_order == 1) %>% 
+  ggplot(data = ., aes(x = horse_count)) +
+  geom_bar()
+```
+
+
+```{r}
+horse_df %>% 
+  filter(arrival_order == 1) %>% 
+  filter(course_len == 1400) %>% 
+  filter(horse_count == 12) %>% 
+  filter(!is.na(course_dir_en)) %>% 
+  group_by(course_dir_en, horse_id) %>% 
+  summarise(mean_time = mean(arrival_time3, na.rm = TRUE)) %>% 
+  ggplot(data = ., aes(x = horse_id, y = mean_time)) +
+  geom_point() +
+  facet_wrap(facets = ~course_dir_en)
+```
+
+
+```{r}
+horse_df %>% 
+  filter(arrival_order == 1) %>% 
+  filter(course_len == 1400) %>% 
+  filter(!is.na(course_dir_en)) %>% 
+  group_by(course_dir_en, frame_id) %>% 
+  summarise(mean_time = mean(arrival_time3, na.rm = TRUE)) %>% 
+  ggplot(data = ., aes(x = frame_id, y = mean_time)) +
+  geom_point() +
+  facet_wrap(facets = ~course_dir_en)
+```
+
+
+```{r}
+dir_time_df <- horse_df %>% 
+  filter(course_len == 1400) %>% 
+  group_by(course_dir_en, frame_id) %>% 
+  summarise(
+    mean_time = mean(arrival_time3, na.rm = TRUE),
+    top_time = min(arrival_time3, na.rm = TRUE),
+    med_time = median(arrival_time3, na.rm = TRUE),
+    worst_time = max(arrival_time3, na.rm = TRUE)
+  ) %>% 
+  ungroup()
+```
+
+```{r}
+ggplot(data = dir_time_df, aes(x = frame_id, y = mean_time)) +
+  geom_point() +
+  facet_wrap(facets = ~course_dir_en)
+```
+
+```{r}
+ggplot(data = dir_time_df, aes(x = frame_id, y = mean_time)) +
+  geom_point() +
+  facet_wrap(facets = ~course_dir_en)
+```
+
+
+
+# Condition
+```{r}
+ggplot(data = horse_df, aes(x = weather_en)) +
+  geom_bar()
+```
+
+
+```{r}
+ggplot(data = horse_df, aes(x = course_type_en)) +
+  geom_bar()
+```
+
+```{r}
+ggplot(data = horse_df, aes(x = course_type_en)) +
+  geom_bar()
+```
+
+# Characteristics of Horses
+```{r}
+ggplot(data = horse_df, aes(x = age)) +
+  geom_bar() +
+  xlim(0, 8) +
+  labs(title = "Horse Age", x = "Age") 
+```
+
+```{r}
+ggplot(data = horse_df, aes(x = sex_en)) +
+  geom_bar() +
+  labs(title = "Horse Sex", x = "Sex") 
+```
+
+```{r}
+ggplot(data = horse_df, aes(x = age)) +
+  geom_bar() +
+  labs(title = "Horse Age by Sex", x = "Age") +
+  facet_wrap(facets = ~sex_en, ncol = 1, scale = "free_y")
+```
+```{r}
+ggplot(data = horse_df, aes(x = horse_weight_today)) +
+  geom_histogram() +
+  labs(title = "Horse Weight by Sex", x = "Horse Weight") +
+  facet_wrap(facets = ~sex_en, ncol = 1)
+```
+
+
+```{r}
+ggplot(data = horse_df, aes(x = horse_weight_today, color = sex_en)) +
+  geom_density() +
+  labs(title = "Horse Weight by Sex", x = "Horse Weight") 
+```
+
+```{r}
+ggplot(data = horse_df, aes(x = horse_weight_diff, color = sex_en)) +
+  geom_density() +
+  labs(title = "Horse Weight Difference by Sex", x = "Horse Weight") 
+```
+
+```{r}
+ggplot(data = horse_df, aes(x = age, y = horse_weight_today, color = sex_en)) +
+  geom_point(size = 1, alpha = 0.4) +
+  geom_smooth(method = "lm") +
+  labs(title = "Age and Weight by Sex", x = "Age", y = "Weight")
+```
+
+# Time
+```{r}
+horse_df %>% 
+  filter(course_len %in% c(1000, 1200, 1400, 1500, 1600)) %>% 
+  ggplot(data = ., aes(x = arrival_time3)) +
+  geom_histogram() +
+  facet_wrap(facets = ~course_len, ncol=1)
+```
+
+```{r}
+horse_df %>% 
+  filter(course_len %in% c(1000, 1200, 1400, 1500, 1600)) %>% 
+  filter(weather_en %in% c("sunny", "cloudy", "rainy")) %>% 
+  filter(arrival_order == 1) %>% 
+  ggplot(data = ., aes(x = arrival_time3, color = weather_en)) +
+  geom_density() +
+  facet_wrap(facets = ~course_len, scales = "free")
+```
+# Horse Experience
+```{r}
+horse_df %>% 
+  group_by(horse_name) %>% 
+  summarise(count = n()) %>% 
+  ggplot(., aes(x = count)) +
+  geom_bar()
+```
+
+```{r}
+horse_df %>% 
+  group_by(jockey) %>% 
+  summarise(count = n()) %>% 
+  ggplot(., aes(x = count)) +
+  geom_histogram()
+```
+```{r}
+horse_df %>% 
+  group_by(horse_name, jockey) %>% 
+  summarise(count = n()) %>% 
+  ggplot(., aes(x = count)) +
+  geom_bar()
+```
+
+# Popularity
+
+```{r}
+
+```
+
+
+```{r}
+lm_pop_order <- lm(arrival_order ~ popularity, data = horse_df)
+summary(lm_pop_order)
+```
+

@@ -1,0 +1,48 @@
+---
+title: "score result"
+author: "Tomoki Nishiyama"
+date: "2024-01-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Data
+```{r}
+df <- read.csv("../data/dev/score_result.csv")
+```
+
+
+```{r}
+df %>% 
+  filter(i1_arrival_order < 13) %>% 
+  ggplot(data = ., aes(x = score_1)) +
+  geom_histogram()
+```
+```{r}
+df %>% 
+  filter(i1_arrival_order < 5) %>% 
+  ggplot(data = ., aes(x = score_1, color = as.factor(i1_arrival_order))) +
+  geom_density()
+```
+
+```{r}
+df %>% 
+  filter(i1_arrival_order < 13) %>% 
+  ggplot(data = ., aes(x = score_1, color = as.factor(i1_arrival_order))) +
+  geom_density()
+```
+
+
+
+```{r}
+df %>% 
+  filter(i1_arrival_order < 13) %>% 
+  ggplot(data = ., aes(x = score_1)) +
+  geom_density() +
+  facet_wrap(facets = ~i1_arrival_order, scales = "free_y")
+```
+
